@@ -1,19 +1,35 @@
-import openai
-import streamlit as st
-import tempfile
+import speech_recognition as sr
 
-openai.api_key = st.secrets["OPENAI_API_KEY"]
+def get_voice_command():
 
-def get_voice_command(audio_bytes):
+    r = sr.Recognizer()
 
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
-        tmp.write(audio_bytes)
-        tmp_path = tmp.name
+    try:
 
-    with open(tmp_path, "rb") as audio_file:
-        transcript = openai.audio.transcriptions.create(
-            model="whisper-1",
-            file=audio_file
-        )
+        with sr.Microphone() as source:
 
-    return transcript.text
+            print("Listening...")
+
+            r.adjust_for_ambient_noise(source)
+
+            audio = r.listen(source, timeout=5, phrase_time_limit=5)
+
+        print("Processing...")
+
+        command = r.recognize_google(audio)
+
+        print("You said:", command)
+
+        return command.lower()
+
+    except sr.WaitTimeoutError:
+
+        return None
+
+    except sr.UnknownValueError:
+
+        return None
+
+    except sr.RequestError:
+
+        return None

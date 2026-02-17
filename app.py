@@ -17,185 +17,260 @@ st.set_page_config(
 )
 
 # -------------------------
-# INITIALIZE DATABASE
+# INIT DB
 # -------------------------
 
 init_db()
 
-# -------------------------
+
 # SESSION STATE
-# -------------------------
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# -------------------------
+
+
 # HANDLE COMMAND
-# -------------------------
 
 def handle_command(command):
 
     intent, item, qty = process_command(command)
 
     if not item and intent != "show":
-        return "⚠️ I couldn't identify the item. Please try again."
+        return "⚠️ I couldn't identify the item."
 
     if intent == "add":
-        add_item(item, qty)
+
+        add_item(item, qty)   # FIXED METHOD (db_helper)
 
         category = get_category(item)
         suggestions = get_suggestions(item)
 
-        reply = f"✅ Added **{qty} {item}** to **{category.title()}** category."
+        reply = f"✅ Added **{qty} {item}** to **{category.title()}**"
 
         if suggestions:
             reply += f"\n\n💡 You may also need: **{', '.join(suggestions)}**"
 
         return reply
 
+
     elif intent == "remove":
+
         remove_item(item)
-        return f"❌ Removed **{item}** from your list."
+
+        return f"❌ Removed **{item}**"
+
 
     elif intent == "show":
-        return "🧾 Here is your current shopping list."
 
-    else:
-        return "⚠️ Sorry, I didn’t understand that command."
+        return "🧾 Here is your shopping list"
 
-# -------------------------
+
+    return "⚠️ Command not understood"
+
+
+
 # HEADER
-# -------------------------
+
 
 st.title("🛒 AI Voice Shopping Assistant")
-st.caption("Smart voice-powered shopping list manager with intelligent suggestions")
 
-st.divider()
+st.caption(
+    "Smart voice-powered shopping list manager"
+)
+
 
 # -------------------------
 # INPUT SECTION
 # -------------------------
 
-col1, col2 = st.columns([4, 1])
+col1, col2 = st.columns([4,1])
 
 with col1:
-    user_input = st.chat_input("Type a command (e.g., Add 2 apples)")
+    user_input = st.chat_input("Type command like: Add 2 apples")
 
 with col2:
     speak_clicked = st.button("🎤 Speak", use_container_width=True)
+
 
 # -------------------------
 # HANDLE TEXT INPUT
 # -------------------------
 
 if user_input:
+
     st.session_state.messages.append(("user", user_input))
 
-    with st.spinner("Processing..."):
-        reply = handle_command(user_input)
+    reply = handle_command(user_input)
 
     st.session_state.messages.append(("assistant", reply))
+
     st.rerun()
+
 
 # -------------------------
 # HANDLE VOICE INPUT
 # -------------------------
 
 if speak_clicked:
-    with st.spinner("Listening..."):
+
+    with st.spinner("🎧 Listening..."):
+
         command = get_voice_command()
 
     if command:
-        st.session_state.messages.append(("user", f"🎤 {command}"))
+
+        st.session_state.messages.append(
+            ("user", f"🎤 {command}")
+        )
 
         reply = handle_command(command)
 
-        st.session_state.messages.append(("assistant", reply))
+        st.session_state.messages.append(
+            ("assistant", reply)
+        )
+
     else:
+
         st.session_state.messages.append(
             ("assistant", "⚠️ Could not understand voice input.")
         )
 
     st.rerun()
 
-# -------------------------
 # CHAT DISPLAY
-# -------------------------
 
 for sender, msg in st.session_state.messages:
+
     with st.chat_message(sender):
+
         st.markdown(msg)
+
+
 
 st.divider()
 
-# -------------------------
-# SHOPPING LIST SECTION
-# -------------------------
+# SHOPPING LIST
 
 col1, col2 = st.columns([5,1])
 
 with col1:
+
     st.subheader("🧾 Shopping List")
 
 with col2:
-    if st.button("🗑 Clear All", use_container_width=True):
+
+    if st.button("🗑 Clear", use_container_width=True):
+
         clear_items()
-        st.session_state.messages.append(
-            ("assistant", "🗑 Shopping list cleared.")
-        )
+
         st.rerun()
+
+
+
+items = get_items()
+
+
 
 # -------------------------
 # DISPLAY ITEMS
 # -------------------------
 
-items = get_items()
-
 if not items:
-    st.info("Your shopping list is empty.")
+
+    st.info("Your shopping list is empty")
+
 else:
-    for item, qty, category in items:
 
-        container = st.container()
-        with container:
+    for index, (item, qty, category) in enumerate(items):
 
-            col1, col2, col3, col4, col5 = st.columns([3,1,1,1,1])
+        st.container()
 
-            # Item + category
-            with col1:
-                st.markdown(
-                    f"**{item}**  \n<small style='color:gray;'>📂 {category}</small>",
-                    unsafe_allow_html=True
-                )
+        c1, c2, c3, c4, c5 = st.columns([3,1,1,1,1])
 
-            # Decrease
-            with col2:
-                if st.button("−", key=f"dec_{item}"):
-                    update_quantity(item, qty - 1)
-                    st.rerun()
 
-            # Quantity
-            with col3:
-                st.markdown(
-                    f"<div style='text-align:center; font-weight:600;'>{qty}</div>",
-                    unsafe_allow_html=True
-                )
+        # ITEM
 
-            # Increase
-            with col4:
-                if st.button("+", key=f"inc_{item}"):
-                    update_quantity(item, qty + 1)
-                    st.rerun()
+        with c1:
 
-            # Delete
-            with col5:
-                if st.button("❌", key=f"del_{item}"):
-                    remove_item(item)
-                    st.rerun()
+            st.markdown(
 
-# -------------------------
-# FOOTER
-# -------------------------
+                f"""
+                **{item}**
+
+                <small style='color:gray'>
+                📂 {category}
+                </small>
+                """,
+
+                unsafe_allow_html=True
+            )
+
+
+        # DECREASE
+
+        with c2:
+
+            if st.button(
+
+                "➖",
+
+                key=f"dec_{index}"
+
+            ):
+
+                update_quantity(item, qty-1)
+
+                st.rerun()
+
+
+
+        # QTY
+
+        with c3:
+
+            st.markdown(
+
+                f"<center><b>{qty}</b></center>",
+
+                unsafe_allow_html=True
+            )
+
+
+
+        # INCREASE
+
+        with c4:
+
+            if st.button(
+
+                "➕",
+
+                key=f"inc_{index}"
+
+            ):
+
+                update_quantity(item, qty+1)
+
+                st.rerun()
+
+
+
+        # DELETE
+
+        with c5:
+
+            if st.button(
+                "🗑",
+                key=f"del_{index}"
+
+            ):
+
+                remove_item(item)
+                st.rerun()
+
+
 
 st.divider()
-st.caption("Built with Streamlit + OpenAI Whisper API + NLP + Smart Suggestions")
+
+st.caption("Built with Streamlit + Voice + NLP")
