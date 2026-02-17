@@ -4,3 +4,8 @@ deep-translator
 openai-whisper
 torch
 ffmpeg-python
+numpy
+pandas
+scipy
+sentencepiece
+protobuf
