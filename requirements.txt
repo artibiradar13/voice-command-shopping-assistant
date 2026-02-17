@@ -2,3 +2,5 @@ streamlit
 SpeechRecognition
 pyaudio
 nltk
+pyttsx3
+streamlit-mic-recorder
