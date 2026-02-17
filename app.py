@@ -7,13 +7,6 @@ from utils.categories_helper import get_category
 
 
 # -------------------------
-# INITIALIZE DATABASE
-# -------------------------
-
-init_db()
-
-
-# -------------------------
 # PAGE CONFIG
 # -------------------------
 
@@ -23,6 +16,11 @@ st.set_page_config(
     layout="centered"
 )
 
+# -------------------------
+# INITIALIZE DATABASE
+# -------------------------
+
+init_db()
 
 # -------------------------
 # SESSION STATE
@@ -31,26 +29,27 @@ st.set_page_config(
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-
 # -------------------------
-# HANDLE COMMAND FUNCTION
+# HANDLE COMMAND
 # -------------------------
 
 def handle_command(command):
 
     intent, item, qty = process_command(command)
 
+    if not item and intent != "show":
+        return "⚠️ I couldn't identify the item. Please try again."
+
     if intent == "add":
         add_item(item, qty)
 
-        suggestions = get_suggestions(item)
         category = get_category(item)
+        suggestions = get_suggestions(item)
 
         reply = f"✅ Added **{qty} {item}** to **{category.title()}** category."
 
         if suggestions:
-            suggestion_text = ", ".join(suggestions)
-            reply += f"\n\n💡 You may also need: **{suggestion_text}**"
+            reply += f"\n\n💡 You may also need: **{', '.join(suggestions)}**"
 
         return reply
 
@@ -62,22 +61,32 @@ def handle_command(command):
         return "🧾 Here is your current shopping list."
 
     else:
-        return "⚠️ Sorry, I didn't understand that command."
-
+        return "⚠️ Sorry, I didn’t understand that command."
 
 # -------------------------
 # HEADER
 # -------------------------
 
 st.title("🛒 AI Voice Shopping Assistant")
-st.caption("Smart voice-powered shopping list manager")
+st.caption("Smart voice-powered shopping list manager with intelligent suggestions")
 
+st.divider()
 
 # -------------------------
-# TEXT INPUT
+# INPUT SECTION
 # -------------------------
 
-user_input = st.chat_input("Type a command (e.g., Add 2 apples)")
+col1, col2 = st.columns([4, 1])
+
+with col1:
+    user_input = st.chat_input("Type a command (e.g., Add 2 apples)")
+
+with col2:
+    speak_clicked = st.button("🎤 Speak", use_container_width=True)
+
+# -------------------------
+# HANDLE TEXT INPUT
+# -------------------------
 
 if user_input:
     st.session_state.messages.append(("user", user_input))
@@ -88,37 +97,26 @@ if user_input:
     st.session_state.messages.append(("assistant", reply))
     st.rerun()
 
-
 # -------------------------
-# VOICE INPUT BUTTON
+# HANDLE VOICE INPUT
 # -------------------------
 
-st.markdown("<br>", unsafe_allow_html=True)
+if speak_clicked:
+    with st.spinner("Listening..."):
+        command = get_voice_command()
 
-col1, col2, col3 = st.columns([2,1,2])
+    if command:
+        st.session_state.messages.append(("user", f"🎤 {command}"))
 
-with col1:
-    if st.button("Speak", use_container_width=True):
+        reply = handle_command(command)
 
-        with st.spinner("Listening..."):
-            command = get_voice_command()
+        st.session_state.messages.append(("assistant", reply))
+    else:
+        st.session_state.messages.append(
+            ("assistant", "⚠️ Could not understand voice input.")
+        )
 
-        if command:
-            st.session_state.messages.append(("user", f"🎤 {command}"))
-
-            reply = handle_command(command)
-
-            st.session_state.messages.append(("assistant", reply))
-
-        else:
-            st.session_state.messages.append(
-                ("assistant", "⚠️ Could not understand voice input.")
-            )
-
-        st.rerun()
-
-
-st.divider()
+    st.rerun()
 
 # -------------------------
 # CHAT DISPLAY
@@ -126,7 +124,9 @@ st.divider()
 
 for sender, msg in st.session_state.messages:
     with st.chat_message(sender):
-        st.write(msg)
+        st.markdown(msg)
+
+st.divider()
 
 # -------------------------
 # SHOPPING LIST SECTION
@@ -145,7 +145,6 @@ with col2:
         )
         st.rerun()
 
-
 # -------------------------
 # DISPLAY ITEMS
 # -------------------------
@@ -157,42 +156,46 @@ if not items:
 else:
     for item, qty, category in items:
 
-        col1, col2, col3, col4, col5 = st.columns([3,1,1,1,1])
+        container = st.container()
+        with container:
 
-        # Item name + category
-        with col1:
-            st.markdown(f"**{item}**  \n<small style='color:gray;'>📂 {category}</small>",
-                        unsafe_allow_html=True)
+            col1, col2, col3, col4, col5 = st.columns([3,1,1,1,1])
 
-        # Decrease quantity
-        with col2:
-            if st.button("➖", key=f"dec_{item}"):
-                update_quantity(item, qty - 1)
-                st.rerun()
+            # Item + category
+            with col1:
+                st.markdown(
+                    f"**{item}**  \n<small style='color:gray;'>📂 {category}</small>",
+                    unsafe_allow_html=True
+                )
 
-        # Quantity display
-        with col3:
-            st.markdown(
-                f"<div style='text-align:center; font-weight:600;'>{qty}</div>",
-                unsafe_allow_html=True
-            )
+            # Decrease
+            with col2:
+                if st.button("−", key=f"dec_{item}"):
+                    update_quantity(item, qty - 1)
+                    st.rerun()
 
-        # Increase quantity
-        with col4:
-            if st.button("➕", key=f"inc_{item}"):
-                update_quantity(item, qty + 1)
-                st.rerun()
+            # Quantity
+            with col3:
+                st.markdown(
+                    f"<div style='text-align:center; font-weight:600;'>{qty}</div>",
+                    unsafe_allow_html=True
+                )
 
-        # Delete item
-        with col5:
-            if st.button("🗑", key=f"del_{item}"):
-                remove_item(item)
-                st.rerun()
+            # Increase
+            with col4:
+                if st.button("+", key=f"inc_{item}"):
+                    update_quantity(item, qty + 1)
+                    st.rerun()
 
+            # Delete
+            with col5:
+                if st.button("❌", key=f"del_{item}"):
+                    remove_item(item)
+                    st.rerun()
 
 # -------------------------
 # FOOTER
 # -------------------------
 
 st.divider()
-st.caption("Built with Streamlit + Whisper + NLP + Smart Suggestions")
+st.caption("Built with Streamlit + OpenAI Whisper API + NLP + Smart Suggestions")
