@@ -1,40 +1,19 @@
-import whisper
-import sounddevice as sd
-import numpy as np
-import scipy.io.wavfile as wav
+import openai
+import streamlit as st
 import tempfile
 
-# Load model only once
-model = whisper.load_model("base")
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 
+def get_voice_command(audio_bytes):
 
-def get_voice_command():
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+        tmp.write(audio_bytes)
+        tmp_path = tmp.name
 
-    fs = 16000
-    seconds = 5
+    with open(tmp_path, "rb") as audio_file:
+        transcript = openai.audio.transcriptions.create(
+            model="whisper-1",
+            file=audio_file
+        )
 
-    print("Listening... Speak now")
-
-    recording = sd.rec(
-        int(seconds * fs),
-        samplerate=fs,
-        channels=1,
-        dtype='int16'
-    )
-
-    sd.wait()
-
-    # Save temporary file
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
-
-    wav.write(temp_file.name, fs, recording)
-
-    print("Processing...")
-
-    result = model.transcribe(temp_file.name)
-
-    command = result["text"]
-
-    print("You said:", command)
-
-    return command.lower()
+    return transcript.text
