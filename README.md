@@ -5,7 +5,8 @@ Users can add, remove, and manage shopping items using voice or text commands.
 
 ---
 ##application preivew
-<img width="1903" height="853" alt="image" src="https://github.com/user-attachments/assets/c7d68633-a320-46b9-8ad6-3765c13b588b" />
+<img width="1761" height="907" alt="image" src="https://github.com/user-attachments/assets/9bbe14e1-33a1-4510-91df-8aa950cabf7d" />
+
 
 
 
@@ -27,10 +28,10 @@ Users can add, remove, and manage shopping items using voice or text commands.
 
 - Streamlit
 - Python
-- SpeechRecognition
+- SpeechRecognition(speech to text)
 - NLP (Custom Intent Detection)
 - SQLite
-- Whisper / Voice Processing
+
 
 ---
 
