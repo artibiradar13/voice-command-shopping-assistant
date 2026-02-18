@@ -3,6 +3,7 @@
 A smart voice-powered shopping list assistant built with Streamlit, NLP, and Voice Recognition.
 Users can add, remove, and manage shopping items using voice or text commands.
 
+web link :https://voice-command-shopping-assistant--artibiradar4899.replit.app
 ---
 ##application preivew
 <img width="1761" height="907" alt="image" src="https://github.com/user-attachments/assets/9bbe14e1-33a1-4510-91df-8aa950cabf7d" />
