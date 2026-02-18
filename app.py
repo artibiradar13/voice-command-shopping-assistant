@@ -197,12 +197,10 @@ else:
 
                 f"""
                 **{item}**
-
                 <small style='color:gray'>
                 📂 {category}
                 </small>
                 """,
-
                 unsafe_allow_html=True
             )
 

@@ -10,7 +10,7 @@ SUGGESTIONS = {
 
 def get_suggestions(item):
 
-    item = item.lower()
+    item = item.lower().strip()
 
     if item in SUGGESTIONS:
         return SUGGESTIONS[item]
